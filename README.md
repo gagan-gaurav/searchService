@@ -1,0 +1,2 @@
+# searchService
+Golang search service 
