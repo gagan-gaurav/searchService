@@ -15,7 +15,7 @@ import (
 func UsersSearch(w http.ResponseWriter, r *http.Request) {
 	queryParam := mux.Vars(r)["query"]
 
-	// Normalizing the query parameter to lowercase and split into individual names
+	// Normalizing the query parameter to lowercase and split into individual names, it is to split firstname, middlename and lastname.
 	names := strings.Split(strings.ToLower(queryParam), " ")
 
 	// Create the query JSON structure with the normalized names
@@ -25,7 +25,7 @@ func UsersSearch(w http.ResponseWriter, r *http.Request) {
 				"path": "users",
 				"query": map[string]interface{}{
 					"bool": map[string]interface{}{
-						"should": createTermQueries("users.name", names),
+						"must": createTermQueries("users.name", names),
 					},
 				},
 			},
@@ -66,16 +66,11 @@ func HashtagsSearch(w http.ResponseWriter, r *http.Request) {
 	// Normalizing the query parameter to lowercase and split into individual hashtags
 	hashtags := strings.Split(strings.ToLower(queryParam), " ")
 
-	// Create the query JSON structure with the normalized hashtags
+	// Create the Elasticsearch query JSON
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
-			"nested": map[string]interface{}{
-				"path": "hashtags",
-				"query": map[string]interface{}{
-					"bool": map[string]interface{}{
-						"should": createTermQueries("hashtags.name", hashtags),
-					},
-				},
+			"bool": map[string]interface{}{
+				"must": nestedHastagsQueries(hashtags),
 			},
 		},
 	}
@@ -159,6 +154,25 @@ func createTermQueries(field string, values []string) []interface{} {
 				field: value,
 			},
 		}
+	}
+	return queries
+}
+
+// Helper function to create nested queries for hashtags
+func nestedHastagsQueries(hashtags []string) []interface{} {
+	var queries []interface{}
+	for _, hashtag := range hashtags {
+		query := map[string]interface{}{
+			"nested": map[string]interface{}{
+				"path": "hashtags",
+				"query": map[string]interface{}{
+					"term": map[string]interface{}{
+						"hashtags.name": hashtag,
+					},
+				},
+			},
+		}
+		queries = append(queries, query)
 	}
 	return queries
 }
