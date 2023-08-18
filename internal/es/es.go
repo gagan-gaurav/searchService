@@ -26,6 +26,7 @@ func CreateClient() {
 	client, err := elasticsearch.NewClient(cfg)
 	if err != nil {
 		fmt.Println("Elasticsearch connection error: ", err)
+		return
 	}
 	fmt.Println("Elasticsearch connection successful.")
 	Client = client
