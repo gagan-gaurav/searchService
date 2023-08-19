@@ -54,10 +54,17 @@ func UsersSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	defer res.Body.Close()
 
+	// Extract and return only the 'hits' part of the response
+	hitsJSON, err := ExtractHits(res.Body)
+	if err != nil {
+		http.Error(w, "Error extracting hits from response", http.StatusInternalServerError)
+		return
+	}
+
 	// Copy the Elasticsearch response to the response writer
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(res.StatusCode)
-	_, _ = io.Copy(w, res.Body)
+	_, _ = w.Write(hitsJSON)
 }
 
 func HashtagsSearch(w http.ResponseWriter, r *http.Request) {
@@ -97,10 +104,17 @@ func HashtagsSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	defer res.Body.Close()
 
+	// Extract and return only the 'hits' part of the response
+	hitsJSON, err := ExtractHits(res.Body)
+	if err != nil {
+		http.Error(w, "Error extracting hits from response", http.StatusInternalServerError)
+		return
+	}
+
 	// Copy the Elasticsearch response to the response writer
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(res.StatusCode)
-	_, _ = io.Copy(w, res.Body)
+	_, _ = w.Write(hitsJSON)
 }
 
 func FuzzySearch(w http.ResponseWriter, r *http.Request) {
@@ -139,10 +153,17 @@ func FuzzySearch(w http.ResponseWriter, r *http.Request) {
 	}
 	defer res.Body.Close()
 
+	// Extract and return only the 'hits' part of the response
+	hitsJSON, err := ExtractHits(res.Body)
+	if err != nil {
+		http.Error(w, "Error extracting hits from response", http.StatusInternalServerError)
+		return
+	}
+
 	// Copy the Elasticsearch response to the response writer
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(res.StatusCode)
-	_, _ = io.Copy(w, res.Body)
+	_, _ = w.Write(hitsJSON)
 }
 
 // Helper function to create an array of term queries for the given field and values
@@ -175,4 +196,25 @@ func nestedHastagsQueries(hashtags []string) []interface{} {
 		queries = append(queries, query)
 	}
 	return queries
+}
+
+// Helper function to extract hits
+func ExtractHits(responseBody io.Reader) ([]byte, error) {
+	var responseData map[string]interface{}
+	err := json.NewDecoder(responseBody).Decode(&responseData)
+	if err != nil {
+		return nil, err
+	}
+
+	hits, exists := responseData["hits"]
+	if !exists {
+		return nil, fmt.Errorf("No 'hits' field found in the response")
+	}
+
+	hitsJSON, err := json.Marshal(hits)
+	if err != nil {
+		return nil, err
+	}
+
+	return hitsJSON, nil
 }
