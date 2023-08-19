@@ -8,8 +8,9 @@ import (
 )
 
 func main() {
-	routes.SetRouter()
-	es.CreateClient()
+	routes.SetRouter()                 // Set the routes.
+	es.CreateClient()                  // Create Elasticsearch client
+	es.CreateProjectsIndex("projects") // Create 'projects' index if already not present.
 
 	// Start the server at port 8081
 	port := "8081"
