@@ -1,2 +1,2 @@
 # searchService
-Golang search service 
+Golang search service using elasticsearch.
